@@ -1,14 +1,20 @@
 package com.ecs;
 
+import com.ecs.domain.CommentNotification;
+import com.ecs.domain.Notification;
+import com.ecs.repository.NotificationRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
+import static com.ecs.domain.NotificationType.COMMENT;
+import static java.time.temporal.ChronoUnit.DAYS;
 import static org.junit.jupiter.api.Assertions.*;
 
 // 통합 테스트로 변경 (testcontainers 통해 MongoDB 도커 컨테이너 사용)
@@ -21,12 +27,32 @@ class NotificationRepositoryMemoryImplTest {
     @Autowired
     private NotificationRepository sut;
 
+    private final long userId = 2L;
+    private final long postId = 3L;
+    private final long writerId = 4L;
+    private final long commentId = 5L;
+    private final String comment = "comment";
     private final Instant now = Instant.now();
-    private final Instant deletedAt = now.plus(90, ChronoUnit.DAYS);
+    private final Instant ninetyDaysAfter = Instant.now().plus(90, DAYS);
+
+    @BeforeEach
+    void setUp() {
+        for (int i = 1; i <= 5; i++) {
+            Instant occurredAt = now.minus(i, DAYS);
+            sut.save(new CommentNotification("id-" + i, userId, COMMENT, occurredAt, now, now, ninetyDaysAfter,
+                    postId, writerId, comment, commentId));
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        sut.deleteAll();
+    }
 
     @Test
     void save() {
-        sut.save(new Notification("1", 100L, NotificationType.LIKE, now, deletedAt));
+        String id = "1";
+        sut.save(createCommentNotification(id));
         Optional<Notification> notification = sut.findById("1");
         assertTrue(notification.isPresent());
     }
@@ -38,22 +64,35 @@ class NotificationRepositoryMemoryImplTest {
      */
     @Test
     void findById() {
-        sut.save(new Notification("2", 200L, NotificationType.LIKE, now, deletedAt));
-        Notification notification = sut.findById("2").orElseThrow();
-        assertEquals(notification.id, "2");
-        assertEquals(notification.userId, 200L);
-        assertEquals(notification.type, NotificationType.LIKE);
-        // assertEquals(notification.createdAt, now);
-        assertEquals(notification.createdAt.getEpochSecond(), now.getEpochSecond());
-        assertEquals(notification.deletedAt.getEpochSecond(), deletedAt.getEpochSecond());
+
+        String id = "2";
+        sut.save(createCommentNotification(id));
+        CommentNotification notification = (CommentNotification) sut.findById("2").orElseThrow();
+        assertEquals(notification.getId(), id);
+        assertEquals(notification.getUserId(), userId);
+        assertEquals(notification.getOccurredAt().getEpochSecond(), now.getEpochSecond());
+        assertEquals(notification.getCreatedAt().getEpochSecond(), now.getEpochSecond());
+        assertEquals(notification.getLastUpdatedAt().getEpochSecond(), now.getEpochSecond());
+        assertEquals(notification.getDeletedAt().getEpochSecond(), ninetyDaysAfter.getEpochSecond());
+        assertEquals(notification.getPostId(), postId);
+        assertEquals(notification.getWriterId(), writerId);
+        assertEquals(notification.getComment(), comment);
+        assertEquals(notification.getCommentId(), commentId);
     }
 
     @Test
     void deleteById() {
-        sut.save(new Notification("3", 300L, NotificationType.LIKE, now, deletedAt));
-        sut.deleteById("3");
+        String id = "3";
 
-        Optional<Notification> notification = sut.findById("3");
-        assertFalse(notification.isPresent());
+        sut.save(createCommentNotification(id));
+        sut.deleteById(id);
+        Optional<Notification> optionalNotification = sut.findById(id);
+
+        assertFalse(optionalNotification.isPresent());
+    }
+
+    private CommentNotification createCommentNotification(String id) {
+        return new CommentNotification(id, userId, COMMENT, now, now, now, ninetyDaysAfter, postId, writerId, comment,
+                commentId);
     }
 }
