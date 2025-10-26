@@ -1,6 +1,7 @@
 package com.ecs.controller.test;
 
 import com.ecs.event.CommentEvent;
+import com.ecs.event.LikeEvent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -33,4 +34,27 @@ public interface EventConsumerTestControllerSpec {
                 "commentId": 3
             }
             """;
+
+    @Operation(
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    examples = {
+                                            @ExampleObject(name = "게시물 좋아요 이벤트", value = LIKE_EVENT_PAYLOAD)
+                                    }
+                            )
+                    }
+            )
+    )
+    void like(LikeEvent event);
+
+    String LIKE_EVENT_PAYLOAD = """
+        {
+            "type": "ADD",
+            "postId": 1,
+            "userId": 2,
+            "createdAt": "2024-08-08T18:25:43.511Z"
+        }
+        """;
 }

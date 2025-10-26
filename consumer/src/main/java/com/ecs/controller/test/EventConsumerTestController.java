@@ -1,6 +1,7 @@
 package com.ecs.controller.test;
 
 import com.ecs.event.CommentEvent;
+import com.ecs.event.LikeEvent;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,9 +13,11 @@ import java.util.function.Consumer;
 public class EventConsumerTestController implements EventConsumerTestControllerSpec{
 
     private final Consumer<CommentEvent> commentEventConsumer;
+    private final Consumer<LikeEvent> likeEventConsumer;
 
-    public EventConsumerTestController(Consumer<CommentEvent> commentEventConsumer) {
+    public EventConsumerTestController(Consumer<CommentEvent> commentEventConsumer, Consumer<LikeEvent> likeEventConsumer) {
         this.commentEventConsumer = commentEventConsumer;
+        this.likeEventConsumer = likeEventConsumer;
     }
 
     @Override
@@ -22,4 +25,8 @@ public class EventConsumerTestController implements EventConsumerTestControllerS
     public void comment(@RequestBody CommentEvent commentEvent) {
         commentEventConsumer.accept(commentEvent);
     }
+
+    @Override
+    @PostMapping("/test/like")
+    public void like(@RequestBody LikeEvent event) { likeEventConsumer.accept(event); }
 }

@@ -20,6 +20,7 @@ public class NotificationSaveService {
         log.info("inserted: {}", result);
     }
 
+    // insert or update (동일한 id 가진 알림이 이미 존재할 경우 update 수행)
     public void upsert(Notification notification) {
         Notification result = repository.save(notification);
         log.info("upserted: {}", result);
