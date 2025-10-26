@@ -1,6 +1,7 @@
 package com.ecs.controller.test;
 
 import com.ecs.event.CommentEvent;
+import com.ecs.event.FollowEvent;
 import com.ecs.event.LikeEvent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -57,4 +58,27 @@ public interface EventConsumerTestControllerSpec {
             "createdAt": "2024-08-08T18:25:43.511Z"
         }
         """;
+
+    @Operation(
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    examples = {
+                                            @ExampleObject(name = "팔로우 이벤트", value = FOLLOW_EVENT_PAYLOAD)
+                                    }
+                            )
+                    }
+            )
+    )
+    void follow(FollowEvent event);
+
+    String FOLLOW_EVENT_PAYLOAD = """
+         {
+            "type": "ADD",
+            "userId": 2,
+            "targetUserId": 1,
+            "createdAt": "2024-08-08T18:25:43.511Z"
+         }
+    """;
 }
